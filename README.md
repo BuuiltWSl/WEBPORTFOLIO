@@ -125,6 +125,15 @@ npm run build
 npm start
 ```
 
+Ready-to-copy server files live in:
+
+```text
+deploy/questcity.env.example
+deploy/nginx-questcity.conf
+deploy/deploy-questcity.sh
+deploy/QUESTCITY_SETUP.md
+```
+
 ## Work Direction
 
 This portfolio should show a clear story: a student who started from camps and competitions, discovered coding and engineering, built game and metaverse prototypes, learned from real projects, and now aims toward computer engineering and creative technology.

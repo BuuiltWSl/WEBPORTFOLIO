@@ -51,3 +51,7 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-28: Added optional `NEXT_PUBLIC_BASE_PATH` support so the app can run under `/built/portfolio-web`.
 - 2026-06-28: Updated auth callback redirect to respect base path.
 - 2026-06-28: Updated `.env.example` and `README.md` with `questcity.cloud/built/portfolio-web` setup notes.
+- 2026-06-28: Added `deploy/questcity.env.example` for production environment variables.
+- 2026-06-28: Added `deploy/nginx-questcity.conf` to proxy `/built/portfolio-web` to port `3200`.
+- 2026-06-28: Added `deploy/deploy-questcity.sh` for server pull, install, build, and start.
+- 2026-06-28: Added `deploy/QUESTCITY_SETUP.md` with DNS, environment, Nginx, HTTPS, and Supabase redirect steps.

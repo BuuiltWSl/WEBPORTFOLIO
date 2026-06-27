@@ -60,3 +60,4 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-28: Updated admin and auth callback back links to respect base path.
 - 2026-06-28: Improved OAuth callback to save Supabase sessions from auth code or URL hash before redirect.
 - 2026-06-28: Added callback wait and error message when Google login returns but Supabase session is not saved.
+- 2026-06-28: Removed public Admin buttons from desktop and mobile navbar so admin is accessed by direct URL only.

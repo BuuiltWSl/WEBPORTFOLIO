@@ -3,7 +3,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '../providers'
-import { appPath } from '../../lib/supabase'
 
 export function Navbar() {
   const [active, setActive] = useState('main')
@@ -86,14 +85,6 @@ export function Navbar() {
               {lang === 'th' ? 'EN' : 'TH'}
             </button>
           </li>
-          <li>
-            <a
-              href={appPath('/admin')}
-              className="px-4 py-2 rounded-full text-sm font-bold text-white bg-slate-900 hover:bg-indigo-600 transition-colors"
-            >
-              Admin
-            </a>
-          </li>
         </ul>
 
         {/* Mobile hamburger */}
@@ -143,19 +134,13 @@ export function Navbar() {
                   </a>
                 </li>
               ))}
-              <li className="grid grid-cols-2 gap-2 pt-2">
+              <li className="pt-2">
                 <button
                   onClick={toggleLang}
-                  className="px-4 py-3 rounded-xl text-sm font-bold text-indigo-600 bg-indigo-50"
+                  className="w-full px-4 py-3 rounded-xl text-sm font-bold text-indigo-600 bg-indigo-50"
                 >
                   {lang === 'th' ? 'English' : 'ไทย'}
                 </button>
-                <a
-                  href={appPath('/admin')}
-                  className="px-4 py-3 rounded-xl text-sm font-bold text-center text-white bg-slate-900"
-                >
-                  Admin
-                </a>
               </li>
             </ul>
           </motion.div>

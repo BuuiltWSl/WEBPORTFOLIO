@@ -48,3 +48,6 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-27: Updated `npm start` to bind Next.js to `0.0.0.0` for Linux server access.
 - 2026-06-27: Added `Procfile` and `server-start.sh` start fallbacks for deployment systems.
 - 2026-06-27: Updated `README.md` with server root directory checks for `No npm start script found`.
+- 2026-06-28: Added optional `NEXT_PUBLIC_BASE_PATH` support so the app can run under `/built/portfolio-web`.
+- 2026-06-28: Updated auth callback redirect to respect base path.
+- 2026-06-28: Updated `.env.example` and `README.md` with `questcity.cloud/built/portfolio-web` setup notes.

@@ -108,6 +108,23 @@ Then check setup:
 npm run check:supabase
 ```
 
+## Run Under A Sub Path
+
+For `https://questcity.cloud/built/portfolio-web`, set:
+
+```env
+NEXT_PUBLIC_SITE_URL=https://questcity.cloud/built/portfolio-web
+NEXT_PUBLIC_BASE_PATH=/built/portfolio-web
+```
+
+Then rebuild:
+
+```bash
+npm install
+npm run build
+npm start
+```
+
 ## Work Direction
 
 This portfolio should show a clear story: a student who started from camps and competitions, discovered coding and engineering, built game and metaverse prototypes, learned from real projects, and now aims toward computer engineering and creative technology.

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '../../../lib/supabase'
+import { appPath, supabase } from '../../../lib/supabase'
 
 export default function AuthCallbackPage() {
   const [message, setMessage] = useState('Finishing login...')
@@ -28,7 +28,7 @@ export default function AuthCallbackPage() {
       }
 
       setMessage('Login done. Going admin...')
-      window.location.href = '/admin'
+      window.location.href = appPath('/admin')
     }
 
     finishLogin()

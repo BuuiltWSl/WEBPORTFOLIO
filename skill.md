@@ -40,3 +40,4 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-27: Synced `portfolio-web` into Git repo `WEBPORTFOLIO` root for server pull deployment.
 - 2026-06-27: Removed Google font runtime fetch from repo layout and CSS so production build does not fail when Google Fonts is unreachable.
 - 2026-06-27: Updated repo `.gitignore` to exclude local `.npm-cache`.
+- 2026-06-27: Added `npm start` production run instructions to `README.md`.

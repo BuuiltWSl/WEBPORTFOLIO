@@ -35,7 +35,7 @@ The main work is a portfolio web app built with Next.js, React, TypeScript, Tail
 
 ## Run
 
-Go into a project folder and run:
+For development, run:
 
 ```bash
 npm run dev
@@ -45,6 +45,24 @@ Then open:
 
 ```text
 http://localhost:3000
+```
+
+For production, build first:
+
+```bash
+npm run build
+```
+
+Then start the production server:
+
+```bash
+npm start
+```
+
+The production server uses the `start` script in `package.json`:
+
+```bash
+next start
 ```
 
 ## Work Direction

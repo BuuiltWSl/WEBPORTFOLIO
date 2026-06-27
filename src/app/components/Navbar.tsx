@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLanguage } from '../providers'
+import { appPath } from '../../lib/supabase'
 
 export function Navbar() {
   const [active, setActive] = useState('main')
@@ -87,7 +88,7 @@ export function Navbar() {
           </li>
           <li>
             <a
-              href="/admin"
+              href={appPath('/admin')}
               className="px-4 py-2 rounded-full text-sm font-bold text-white bg-slate-900 hover:bg-indigo-600 transition-colors"
             >
               Admin
@@ -150,7 +151,7 @@ export function Navbar() {
                   {lang === 'th' ? 'English' : 'ไทย'}
                 </button>
                 <a
-                  href="/admin"
+                  href={appPath('/admin')}
                   className="px-4 py-3 rounded-xl text-sm font-bold text-center text-white bg-slate-900"
                 >
                   Admin

@@ -55,3 +55,6 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-28: Added `deploy/nginx-questcity.conf` to proxy `/built/portfolio-web` to port `3200`.
 - 2026-06-28: Added `deploy/deploy-questcity.sh` for server pull, install, build, and start.
 - 2026-06-28: Added `deploy/QUESTCITY_SETUP.md` with DNS, environment, Nginx, HTTPS, and Supabase redirect steps.
+- 2026-06-28: Fixed Admin navigation to respect `/built/portfolio-web` base path.
+- 2026-06-28: Updated Google login callback to return users to Admin or Reviews based on where login started.
+- 2026-06-28: Updated admin and auth callback back links to respect base path.

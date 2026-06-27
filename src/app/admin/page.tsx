@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { ArrowLeft, Check, Eye, LogOut, Plus, Save, Trash2, Upload, X } from 'lucide-react'
 import Link from 'next/link'
-import { adminEmail, siteUrl, supabase } from '../../lib/supabase'
+import { adminEmail, appPath, siteUrl, supabase } from '../../lib/supabase'
 import type { AboutMe, PortfolioCategory, PortfolioProject, Review } from '../../lib/portfolio'
 
 const emptyProject: Omit<PortfolioProject, 'id' | 'sort_order' | 'is_featured' | 'is_visible'> & {
@@ -80,7 +80,7 @@ export default function AdminPage() {
     if (!supabase) return
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${siteUrl}/auth/callback` },
+      options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent('/admin')}` },
     })
   }
 
@@ -408,7 +408,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-[#f8f9fc] px-6 py-10">
       <div className="max-w-7xl mx-auto">
-        <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600">
+        <Link href={appPath('/')} className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600">
           <ArrowLeft size={16} /> Back to portfolio
         </Link>
         {children}
@@ -416,4 +416,3 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     </main>
   )
 }
-

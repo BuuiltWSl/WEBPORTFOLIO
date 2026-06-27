@@ -25,7 +25,7 @@ export function ReviewsSection({ reviews: initialReviews }: { reviews: Review[] 
     if (!supabase) return
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${siteUrl}/auth/callback` },
+      options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent('/#reviews')}` },
     })
   }
 

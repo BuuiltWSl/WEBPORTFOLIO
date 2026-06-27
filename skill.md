@@ -41,3 +41,7 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-27: Removed Google font runtime fetch from repo layout and CSS so production build does not fail when Google Fonts is unreachable.
 - 2026-06-27: Updated repo `.gitignore` to exclude local `.npm-cache`.
 - 2026-06-27: Added `npm start` production run instructions to `README.md`.
+- 2026-06-27: Copied local environment settings from old `portfolio-web/.env` to repo `WEBPORTFOLIO/.env.local` without recording secret values.
+- 2026-06-27: Corrected local `NEXT_PUBLIC_SUPABASE_URL` from dashboard URL to project API URL without recording secret values.
+- 2026-06-27: Added `scripts/check-supabase.mjs` and `npm run check:supabase` to detect missing Supabase schema tables.
+- 2026-06-27: Updated `README.md` with Supabase setup steps and warning not to use dashboard URLs.

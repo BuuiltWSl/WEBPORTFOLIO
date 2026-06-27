@@ -65,6 +65,30 @@ The production server uses the `start` script in `package.json`:
 next start
 ```
 
+## Supabase Setup
+
+Create `.env.local` from `.env.example`, then use the real project API URL:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://PROJECT_REF.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+NEXT_PUBLIC_ADMIN_EMAIL=sangsanwongmoolno.4@gmail.com
+```
+
+Do not use a Supabase dashboard URL.
+
+Open Supabase SQL Editor and run:
+
+```text
+supabase/schema.sql
+```
+
+Then check setup:
+
+```bash
+npm run check:supabase
+```
+
 ## Work Direction
 
 This portfolio should show a clear story: a student who started from camps and competitions, discovered coding and engineering, built game and metaverse prototypes, learned from real projects, and now aims toward computer engineering and creative technology.

@@ -24,32 +24,29 @@ export default function AuthCallbackPage() {
       const errorDescription = params.get('error_description') || hashParams.get('error_description')
       const next = params.get('next')
       const safeNext = next?.startsWith('/') ? next : '/admin'
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
 
       if (errorDescription) {
         setMessage(errorDescription)
         return
       }
 
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (accessToken && refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        })
+
         if (error) {
           setMessage(error.message)
           return
         }
-      } else {
-        const accessToken = hashParams.get('access_token')
-        const refreshToken = hashParams.get('refresh_token')
-
-        if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          })
-
-          if (error) {
-            setMessage(error.message)
-            return
-          }
+      } else if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        if (error) {
+          setMessage(`${error.message}. Click Google login again.`)
+          return
         }
       }
 

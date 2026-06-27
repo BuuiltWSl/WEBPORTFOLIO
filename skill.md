@@ -61,3 +61,5 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-28: Improved OAuth callback to save Supabase sessions from auth code or URL hash before redirect.
 - 2026-06-28: Added callback wait and error message when Google login returns but Supabase session is not saved.
 - 2026-06-28: Removed public Admin buttons from desktop and mobile navbar so admin is accessed by direct URL only.
+- 2026-06-28: Changed Supabase OAuth to implicit flow to avoid expired PKCE code exchange on deployed callback path.
+- 2026-06-28: Updated auth callback to save URL hash tokens before trying auth code exchange and show a retry message for expired codes.

@@ -45,3 +45,6 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-27: Corrected local `NEXT_PUBLIC_SUPABASE_URL` from dashboard URL to project API URL without recording secret values.
 - 2026-06-27: Added `scripts/check-supabase.mjs` and `npm run check:supabase` to detect missing Supabase schema tables.
 - 2026-06-27: Updated `README.md` with Supabase setup steps and warning not to use dashboard URLs.
+- 2026-06-27: Updated `npm start` to bind Next.js to `0.0.0.0` for Linux server access.
+- 2026-06-27: Added `Procfile` and `server-start.sh` start fallbacks for deployment systems.
+- 2026-06-27: Updated `README.md` with server root directory checks for `No npm start script found`.

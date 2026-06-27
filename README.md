@@ -62,7 +62,26 @@ npm start
 The production server uses the `start` script in `package.json`:
 
 ```bash
-next start
+next start -H 0.0.0.0
+```
+
+If a server says `No npm start script found`, check that the server is running from the repository root. The root must contain `package.json`.
+
+```bash
+cd /home/bu1ltwsl/portfolio-web
+pwd
+ls
+cat package.json
+git pull origin main
+npm install
+npm run build
+npm start
+```
+
+The latest pushed commit should be visible with:
+
+```bash
+git rev-parse --short HEAD
 ```
 
 ## Supabase Setup

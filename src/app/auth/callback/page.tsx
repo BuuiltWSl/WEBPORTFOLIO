@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { appPath, supabase } from '../../../lib/supabase'
 
+function wait(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
 export default function AuthCallbackPage() {
   const [message, setMessage] = useState('Finishing login...')
 
@@ -15,8 +19,16 @@ export default function AuthCallbackPage() {
       }
 
       const params = new URLSearchParams(window.location.search)
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
       const code = params.get('code')
+      const errorDescription = params.get('error_description') || hashParams.get('error_description')
       const next = params.get('next')
+      const safeNext = next?.startsWith('/') ? next : '/admin'
+
+      if (errorDescription) {
+        setMessage(errorDescription)
+        return
+      }
 
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
@@ -25,13 +37,35 @@ export default function AuthCallbackPage() {
           return
         }
       } else {
-        await supabase.auth.getSession()
+        const accessToken = hashParams.get('access_token')
+        const refreshToken = hashParams.get('refresh_token')
+
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+
+          if (error) {
+            setMessage(error.message)
+            return
+          }
+        }
       }
 
-      const safeNext = next?.startsWith('/') ? next : '/admin'
+      for (let attempt = 0; attempt < 12; attempt += 1) {
+        const { data } = await supabase.auth.getSession()
 
-      setMessage('Login done. Going next...')
-      window.location.href = appPath(safeNext)
+        if (data.session) {
+          setMessage('Login done. Going next...')
+          window.location.replace(appPath(safeNext))
+          return
+        }
+
+        await wait(150)
+      }
+
+      setMessage('Login token came back, but session not saved. Check Supabase URL, anon key, and redirect URL.')
     }
 
     finishLogin()

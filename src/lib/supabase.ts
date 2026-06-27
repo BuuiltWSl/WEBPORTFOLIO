@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { Session } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -24,4 +25,39 @@ export function appPath(path: string) {
   if (!basePath) return path
   if (path === '/') return basePath
   return `${basePath}${path.startsWith('/') ? path : `/${path}`}`
+}
+
+export function publicUrl(path: string) {
+  const cleanSiteUrl = siteUrl.replace(/\/$/, '')
+  const cleanBasePath = basePath.replace(/\/$/, '')
+  const nextPath = appPath(path)
+
+  if (cleanBasePath && cleanSiteUrl.endsWith(cleanBasePath) && nextPath.startsWith(cleanBasePath)) {
+    return `${cleanSiteUrl}${nextPath.slice(cleanBasePath.length) || '/'}`
+  }
+
+  return `${cleanSiteUrl}${nextPath}`
+}
+
+export async function sessionFromUrl(): Promise<Session | null> {
+  if (!supabase || typeof window === 'undefined') return null
+
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  const accessToken = hashParams.get('access_token')
+  const refreshToken = hashParams.get('refresh_token')
+
+  if (accessToken && refreshToken) {
+    const { data, error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    })
+
+    if (error) return null
+
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
+    return data.session
+  }
+
+  const { data } = await supabase.auth.getSession()
+  return data.session
 }

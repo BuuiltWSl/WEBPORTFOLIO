@@ -63,3 +63,6 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-28: Removed public Admin buttons from desktop and mobile navbar so admin is accessed by direct URL only.
 - 2026-06-28: Changed Supabase OAuth to implicit flow to avoid expired PKCE code exchange on deployed callback path.
 - 2026-06-28: Updated auth callback to save URL hash tokens before trying auth code exchange and show a retry message for expired codes.
+- 2026-06-28: Added `publicUrl` and `sessionFromUrl` helpers so auth redirects respect base path and pages can save login tokens directly.
+- 2026-06-28: Changed Admin Google login to return directly to `/admin` instead of the callback page.
+- 2026-06-28: Changed Reviews Google login to return directly to `/#reviews` and restore the session there.

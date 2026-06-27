@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { ArrowLeft, Check, Eye, LogOut, Plus, Save, Trash2, Upload, X } from 'lucide-react'
 import Link from 'next/link'
-import { adminEmail, appPath, siteUrl, supabase } from '../../lib/supabase'
+import { adminEmail, appPath, publicUrl, sessionFromUrl, supabase } from '../../lib/supabase'
 import type { AboutMe, PortfolioCategory, PortfolioProject, Review } from '../../lib/portfolio'
 
 const emptyProject: Omit<PortfolioProject, 'id' | 'sort_order' | 'is_featured' | 'is_visible'> & {
@@ -67,7 +67,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!supabase) return
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    sessionFromUrl().then((nextSession) => setSession(nextSession))
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
     return () => data.subscription.unsubscribe()
   }, [])
@@ -80,7 +80,7 @@ export default function AdminPage() {
     if (!supabase) return
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent('/admin')}` },
+      options: { redirectTo: publicUrl('/admin') },
     })
   }
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Session } from '@supabase/supabase-js'
-import { supabase, siteUrl } from '../../lib/supabase'
+import { publicUrl, sessionFromUrl, supabase } from '../../lib/supabase'
 import type { Review } from '../../lib/portfolio'
 import { useLanguage } from '../providers'
 
@@ -16,7 +16,7 @@ export function ReviewsSection({ reviews: initialReviews }: { reviews: Review[] 
 
   useEffect(() => {
     if (!supabase) return
-    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    sessionFromUrl().then((nextSession) => setSession(nextSession))
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
     return () => data.subscription.unsubscribe()
   }, [])
@@ -25,7 +25,7 @@ export function ReviewsSection({ reviews: initialReviews }: { reviews: Review[] 
     if (!supabase) return
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent('/#reviews')}` },
+      options: { redirectTo: publicUrl('/#reviews') },
     })
   }
 

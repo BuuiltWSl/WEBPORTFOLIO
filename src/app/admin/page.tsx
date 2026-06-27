@@ -48,6 +48,9 @@ export default function AdminPage() {
   const [password, setPassword] = useState('')
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
   const [authMessage, setAuthMessage] = useState('')
+  const [authReady, setAuthReady] = useState(false)
+  const [adminAllowed, setAdminAllowed] = useState(false)
+  const [adminChecked, setAdminChecked] = useState(false)
   const [tab, setTab] = useState<Tab>('projects')
   const [projects, setProjects] = useState<PortfolioProject[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
@@ -63,18 +66,66 @@ export default function AdminPage() {
   const [techText, setTechText] = useState('')
   const [status, setStatus] = useState('')
 
-  const isAdmin = useMemo(() => session?.user.email?.toLowerCase() === adminEmail.toLowerCase(), [session])
+  const isAdmin = useMemo(
+    () => adminAllowed || session?.user.email?.toLowerCase() === adminEmail.toLowerCase(),
+    [adminAllowed, session],
+  )
 
   useEffect(() => {
     if (!supabase) return
-    sessionFromUrl().then((nextSession) => setSession(nextSession))
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
+    sessionFromUrl().then((nextSession) => {
+      setSession(nextSession)
+      setAuthReady(true)
+    })
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession)
+      setAuthReady(true)
+    })
     return () => data.subscription.unsubscribe()
   }, [])
 
   useEffect(() => {
-    if (session) loadAdminData()
-  }, [session])
+    if (session) checkAdminAccess(session)
+    else if (authReady) clearAdminAccess()
+  }, [session, authReady])
+
+  useEffect(() => {
+    if (session && isAdmin) loadAdminData()
+  }, [session, isAdmin])
+
+  async function checkAdminAccess(currentSession: Session) {
+    if (!supabase) return
+    setAdminChecked(false)
+
+    const email = currentSession.user.email?.toLowerCase() || ''
+    if (email === adminEmail.toLowerCase()) {
+      setAdminAllowed(true)
+      await supabase.from('profiles').update({ role: 'admin' }).eq('id', currentSession.user.id)
+      setAdminChecked(true)
+      return
+    }
+
+    const { data: rpcAllowed } = await supabase.rpc('is_admin')
+    if (rpcAllowed) {
+      setAdminAllowed(true)
+      setAdminChecked(true)
+      return
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', currentSession.user.id)
+      .maybeSingle()
+
+    setAdminAllowed(profile?.role === 'admin')
+    setAdminChecked(true)
+  }
+
+  async function clearAdminAccess() {
+    setAdminAllowed(false)
+    setAdminChecked(true)
+  }
 
   async function signInWithGoogle() {
     if (!supabase) return
@@ -91,10 +142,20 @@ export default function AdminPage() {
     const action =
       authMode === 'signin'
         ? supabase.auth.signInWithPassword({ email, password })
-        : supabase.auth.signUp({ email, password })
+        : supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: publicUrl('/admin') },
+          })
 
-    const { error } = await action
-    setAuthMessage(error ? error.message : authMode === 'signin' ? 'Login done.' : 'Account created. Check email if confirmation is on.')
+    const { data, error } = await action
+    if (error) {
+      setAuthMessage(error.message)
+      return
+    }
+
+    if (data.session) setSession(data.session)
+    setAuthMessage(authMode === 'signin' ? 'Login done.' : 'Account created. Check email if confirmation is on.')
   }
 
   async function signOut() {
@@ -264,11 +325,22 @@ export default function AdminPage() {
     )
   }
 
+  if (!adminChecked) {
+    return (
+      <AdminShell>
+        <div className="rounded-[2rem] bg-white border border-indigo-100 p-8 text-indigo-600">
+          Checking admin access...
+        </div>
+      </AdminShell>
+    )
+  }
+
   if (!isAdmin) {
     return (
       <AdminShell>
         <div className="rounded-[2rem] bg-white border border-red-100 p-8 text-red-600">
           This account not admin: {session.user.email}
+          <p className="mt-2 text-sm text-red-400">Configured admin: {adminEmail}</p>
           <button onClick={signOut} className="mt-5 block rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white">
             Sign out
           </button>

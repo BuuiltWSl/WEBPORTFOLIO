@@ -66,3 +66,8 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-28: Added `publicUrl` and `sessionFromUrl` helpers so auth redirects respect base path and pages can save login tokens directly.
 - 2026-06-28: Changed Admin Google login to return directly to `/admin` instead of the callback page.
 - 2026-06-28: Changed Reviews Google login to return directly to `/#reviews` and restore the session there.
+- 2026-06-28: Added admin access check from configured admin email, Supabase `is_admin`, and `profiles.role`.
+- 2026-06-28: Updated email login/signup to set the session after success and send signup confirmations back to `/admin`.
+- 2026-06-28: Changed review Google redirect from `#reviews` to `?review=1` so it does not collide with OAuth hash tokens.
+- 2026-06-28: Added clearer review submit messages when user is not logged in or message is empty.
+- 2026-06-28: Adjusted admin access reset to satisfy React lint rules.

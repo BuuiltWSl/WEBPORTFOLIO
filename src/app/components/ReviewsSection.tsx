@@ -16,7 +16,13 @@ export function ReviewsSection({ reviews: initialReviews }: { reviews: Review[] 
 
   useEffect(() => {
     if (!supabase) return
-    sessionFromUrl().then((nextSession) => setSession(nextSession))
+    sessionFromUrl().then((nextSession) => {
+      setSession(nextSession)
+      if (new URLSearchParams(window.location.search).get('review') === '1') {
+        document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' })
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+    })
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => setSession(nextSession))
     return () => data.subscription.unsubscribe()
   }, [])
@@ -25,13 +31,21 @@ export function ReviewsSection({ reviews: initialReviews }: { reviews: Review[] 
     if (!supabase) return
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: publicUrl('/#reviews') },
+      options: { redirectTo: publicUrl('/?review=1') },
     })
   }
 
   async function submitReview(event: React.FormEvent) {
     event.preventDefault()
-    if (!supabase || !session?.user || !message.trim()) return
+    if (!supabase) return
+    if (!session?.user) {
+      setStatus(lang === 'th' ? 'ต้อง login ก่อน' : 'Login first.')
+      return
+    }
+    if (!message.trim()) {
+      setStatus(lang === 'th' ? 'เขียนข้อความก่อน' : 'Write a message first.')
+      return
+    }
 
     const user = session.user
     const { error } = await supabase.from('reviews').insert({

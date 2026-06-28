@@ -142,6 +142,8 @@ for each row execute function public.handle_new_user();
 create or replace function public.is_admin()
 returns boolean
 language sql
+security definer
+set search_path = public
 stable
 as $$
   select exists (
@@ -179,10 +181,7 @@ drop policy if exists "Users update own profile admins update all" on public.pro
 drop policy if exists "Users update own profile details" on public.profiles;
 create policy "Users update own profile details" on public.profiles
 for update using (auth.uid() = id)
-with check (
-  auth.uid() = id
-  and role = (select profiles.role from public.profiles where profiles.id = auth.uid())
-);
+with check (auth.uid() = id and role = 'user');
 
 drop policy if exists "Admins update all profiles" on public.profiles;
 create policy "Admins update all profiles" on public.profiles

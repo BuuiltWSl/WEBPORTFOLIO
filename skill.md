@@ -81,3 +81,5 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-28: Updated schema profile trigger to read Google avatar from `avatar_url` or `picture`.
 - 2026-06-28: Updated Admin email and OAuth auth state handling to save the logged-in user profile.
 - 2026-06-28: Fixed base path helpers so `/built/portfolio-web` is not duplicated in admin back links or auth URLs.
+- 2026-06-28: Updated session restore to exchange Supabase `?code=` auth redirects on any page.
+- 2026-06-28: Added public navbar email/password login and signup modal with Google as secondary option.

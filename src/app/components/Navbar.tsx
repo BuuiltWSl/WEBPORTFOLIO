@@ -13,6 +13,11 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin')
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authMessage, setAuthMessage] = useState('')
   const { lang, toggleLang } = useLanguage()
   const user = session?.user
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'
@@ -67,6 +72,38 @@ export function Navbar() {
       provider: 'google',
       options: { redirectTo: publicUrl('/') },
     })
+  }
+
+  async function handleEmailAuth(event: React.FormEvent) {
+    event.preventDefault()
+    if (!supabase) return
+
+    setAuthMessage('')
+    const action =
+      authMode === 'signin'
+        ? supabase.auth.signInWithPassword({ email: authEmail, password: authPassword })
+        : supabase.auth.signUp({
+            email: authEmail,
+            password: authPassword,
+            options: { emailRedirectTo: publicUrl('/') },
+          })
+
+    const { data, error } = await action
+
+    if (error) {
+      setAuthMessage(error.message)
+      return
+    }
+
+    if (data.session) {
+      await ensureUserProfile(data.session)
+      setSession(data.session)
+      setAuthOpen(false)
+      setAuthPassword('')
+      return
+    }
+
+    setAuthMessage(authMode === 'signup' ? 'Account created. Check email if confirmation is on.' : 'Check email or password.')
   }
 
   async function signOut() {
@@ -162,12 +199,63 @@ export function Navbar() {
                 </AnimatePresence>
               </>
             ) : (
-              <button
-                onClick={signInWithGoogle}
-                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-600"
-              >
-                Login
-              </button>
+              <>
+                <button
+                  onClick={() => setAuthOpen((open) => !open)}
+                  className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-600"
+                >
+                  Login
+                </button>
+                <AnimatePresence>
+                  {authOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="absolute right-0 mt-3 w-80 rounded-2xl border border-slate-100 bg-white p-4 shadow-xl shadow-indigo-500/10"
+                    >
+                      <h3 className="text-base font-extrabold text-slate-800">{authMode === 'signin' ? 'Login' : 'Create account'}</h3>
+                      <form onSubmit={handleEmailAuth} className="mt-4 space-y-3">
+                        <input
+                          value={authEmail}
+                          onChange={(event) => setAuthEmail(event.target.value)}
+                          type="email"
+                          placeholder="Email"
+                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-400"
+                          required
+                        />
+                        <input
+                          value={authPassword}
+                          onChange={(event) => setAuthPassword(event.target.value)}
+                          type="password"
+                          placeholder="Password"
+                          className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-400"
+                          required
+                        />
+                        <button className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-700">
+                          {authMode === 'signin' ? 'Sign in' : 'Create account'}
+                        </button>
+                      </form>
+                      <button
+                        onClick={signInWithGoogle}
+                        className="mt-3 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-600"
+                      >
+                        Continue with Google
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAuthMode(authMode === 'signin' ? 'signup' : 'signin')
+                          setAuthMessage('')
+                        }}
+                        className="mt-3 text-sm font-bold text-indigo-600"
+                      >
+                        {authMode === 'signin' ? 'Need account?' : 'Already have account?'}
+                      </button>
+                      {authMessage && <p className="mt-3 text-sm font-semibold text-amber-600">{authMessage}</p>}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
             )}
           </li>
         </ul>
@@ -247,12 +335,46 @@ export function Navbar() {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={signInWithGoogle}
-                    className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
-                  >
-                    Login
-                  </button>
+                  <div className="rounded-2xl border border-slate-100 bg-white p-4">
+                    <h3 className="text-sm font-extrabold text-slate-800">{authMode === 'signin' ? 'Login' : 'Create account'}</h3>
+                    <form onSubmit={handleEmailAuth} className="mt-3 space-y-3">
+                      <input
+                        value={authEmail}
+                        onChange={(event) => setAuthEmail(event.target.value)}
+                        type="email"
+                        placeholder="Email"
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-400"
+                        required
+                      />
+                      <input
+                        value={authPassword}
+                        onChange={(event) => setAuthPassword(event.target.value)}
+                        type="password"
+                        placeholder="Password"
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-indigo-400"
+                        required
+                      />
+                      <button className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white">
+                        {authMode === 'signin' ? 'Sign in' : 'Create account'}
+                      </button>
+                    </form>
+                    <button
+                      onClick={signInWithGoogle}
+                      className="mt-3 w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
+                    >
+                      Continue with Google
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAuthMode(authMode === 'signin' ? 'signup' : 'signin')
+                        setAuthMessage('')
+                      }}
+                      className="mt-3 text-sm font-bold text-indigo-600"
+                    >
+                      {authMode === 'signin' ? 'Need account?' : 'Already have account?'}
+                    </button>
+                    {authMessage && <p className="mt-3 text-sm font-semibold text-amber-600">{authMessage}</p>}
+                  </div>
                 )}
               </li>
             </ul>

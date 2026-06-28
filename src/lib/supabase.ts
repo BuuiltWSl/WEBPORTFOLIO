@@ -51,7 +51,9 @@ export function publicUrl(path: string) {
 export async function sessionFromUrl(): Promise<Session | null> {
   if (!supabase || typeof window === 'undefined') return null
 
+  const searchParams = new URLSearchParams(window.location.search)
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  const code = searchParams.get('code')
   const accessToken = hashParams.get('access_token')
   const refreshToken = hashParams.get('refresh_token')
 
@@ -64,6 +66,16 @@ export async function sessionFromUrl(): Promise<Session | null> {
     if (error) return null
 
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
+    await ensureUserProfile(data.session)
+    return data.session
+  }
+
+  if (code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (error) return null
+
+    window.history.replaceState(null, '', window.location.pathname)
     await ensureUserProfile(data.session)
     return data.session
   }

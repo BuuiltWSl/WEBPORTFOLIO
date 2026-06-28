@@ -88,3 +88,4 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-28: Updated Admin Projects to show legacy projects, edit them, and import them into the database on save.
 - 2026-06-28: Added a guard so legacy projects cannot be deleted before they are imported into the database.
 - 2026-06-28: Fixed Supabase RLS recursion by making `is_admin()` security definer and removing self-reading profile update policy.
+- 2026-06-28: Added clearer Admin project save status and an Import legacy button that inserts missing legacy projects into the database.

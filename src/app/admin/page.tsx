@@ -6,7 +6,7 @@ import { ArrowLeft, Check, Eye, LogOut, Plus, Save, Trash2, Upload, X } from 'lu
 import Link from 'next/link'
 import { adminEmail, appPath, ensureUserProfile, publicUrl, sessionFromUrl, supabase } from '../../lib/supabase'
 import type { AboutMe, PortfolioCategory, PortfolioProject, Review } from '../../lib/portfolio'
-import { mergeWithLegacyProjects } from '../../lib/legacy-projects'
+import { legacyPortfolioProjects, mergeWithLegacyProjects } from '../../lib/legacy-projects'
 
 const emptyProject: Omit<PortfolioProject, 'id' | 'sort_order' | 'is_featured' | 'is_visible'> & {
   id?: string
@@ -39,6 +39,28 @@ function toList(value: string) {
 
 function fromList(value?: string[] | null) {
   return (value || []).join(', ')
+}
+
+function projectPayload(project: typeof emptyProject, tags: string[], technologies: string[]) {
+  return {
+    category: project.category,
+    title_th: project.title_th,
+    title_en: project.title_en || null,
+    subtitle_th: project.subtitle_th || null,
+    subtitle_en: project.subtitle_en || null,
+    details_th: project.details_th || null,
+    details_en: project.details_en || null,
+    tags,
+    technologies,
+    achievement_th: project.achievement_th || null,
+    achievement_en: project.achievement_en || null,
+    github_url: project.github_url || null,
+    demo_url: project.demo_url || null,
+    project_date: project.project_date || null,
+    sort_order: project.sort_order || 100,
+    is_featured: Boolean(project.is_featured),
+    is_visible: project.is_visible !== false,
+  }
 }
 
 type Tab = 'projects' | 'about' | 'reviews'
@@ -206,25 +228,7 @@ export default function AdminPage() {
     event.preventDefault()
     if (!supabase) return
 
-    const payload = {
-      category: form.category,
-      title_th: form.title_th,
-      title_en: form.title_en || null,
-      subtitle_th: form.subtitle_th || null,
-      subtitle_en: form.subtitle_en || null,
-      details_th: form.details_th || null,
-      details_en: form.details_en || null,
-      tags: toList(tagsText),
-      technologies: toList(techText),
-      achievement_th: form.achievement_th || null,
-      achievement_en: form.achievement_en || null,
-      github_url: form.github_url || null,
-      demo_url: form.demo_url || null,
-      project_date: form.project_date || null,
-      sort_order: form.sort_order || 100,
-      is_featured: Boolean(form.is_featured),
-      is_visible: form.is_visible !== false,
-    }
+    const payload = projectPayload(form, toList(tagsText), toList(techText))
 
     const query = form.id && !editingLegacyId
       ? supabase.from('projects').update(payload).eq('id', form.id).select().single()
@@ -232,13 +236,43 @@ export default function AdminPage() {
 
     const { data, error } = await query
     if (error) {
-      setStatus(error.message)
+      setStatus(`Save failed: ${error.message}`)
       return
     }
 
-    setStatus(editingLegacyId ? 'Legacy project imported and saved.' : 'Saved.')
+    setStatus(`${editingLegacyId ? 'Legacy project imported and saved' : 'Saved'}: ${data.title_th} (${data.is_visible ? 'visible' : 'hidden'})`)
     setEditingLegacyId(null)
     if (data) setForm((current) => ({ ...current, id: data.id }))
+    await loadAdminData()
+  }
+
+  async function importLegacyProjects() {
+    if (!supabase || !confirm('Import all legacy projects into database?')) return
+
+    const { data: existingRows, error: existingError } = await supabase.from('projects').select('category,title_th')
+    if (existingError) {
+      setStatus(`Import failed: ${existingError.message}`)
+      return
+    }
+
+    const existingKeys = new Set((existingRows || []).map((project) => `${project.category}:${project.title_th}`))
+    const rows = legacyPortfolioProjects()
+      .filter((project) => !existingKeys.has(`${project.category}:${project.title_th}`))
+      .map((project) => projectPayload(project, project.tags || [], project.technologies || []))
+
+    if (!rows.length) {
+      setStatus('All legacy projects are already in database.')
+      return
+    }
+
+    const { data, error } = await supabase.from('projects').insert(rows).select('id')
+
+    if (error) {
+      setStatus(`Import failed: ${error.message}`)
+      return
+    }
+
+    setStatus(`Imported ${data?.length || 0} legacy projects into database.`)
     await loadAdminData()
   }
 
@@ -396,7 +430,12 @@ export default function AdminPage() {
           <form onSubmit={saveProject} className="rounded-[2rem] bg-white border border-slate-100 p-6 shadow-xl shadow-indigo-500/5 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-extrabold text-slate-800">{form.id || editingLegacyId ? 'Edit Project' : 'Add Project'}</h2>
-              <button type="button" onClick={resetForm} className="rounded-full bg-slate-100 p-2 text-slate-500"><Plus size={16} /></button>
+              <div className="flex gap-2">
+                <button type="button" onClick={importLegacyProjects} className="rounded-full bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700">
+                  Import legacy
+                </button>
+                <button type="button" onClick={resetForm} className="rounded-full bg-slate-100 p-2 text-slate-500"><Plus size={16} /></button>
+              </div>
             </div>
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as PortfolioCategory })} className="admin-input">
               <option value="computer">Computer Projects</option>

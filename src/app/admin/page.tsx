@@ -6,6 +6,7 @@ import { ArrowLeft, Check, Eye, LogOut, Plus, Save, Trash2, Upload, X } from 'lu
 import Link from 'next/link'
 import { adminEmail, appPath, ensureUserProfile, publicUrl, sessionFromUrl, supabase } from '../../lib/supabase'
 import type { AboutMe, PortfolioCategory, PortfolioProject, Review } from '../../lib/portfolio'
+import { mergeWithLegacyProjects } from '../../lib/legacy-projects'
 
 const emptyProject: Omit<PortfolioProject, 'id' | 'sort_order' | 'is_featured' | 'is_visible'> & {
   id?: string
@@ -62,6 +63,7 @@ export default function AdminPage() {
     body_en: '',
   })
   const [form, setForm] = useState({ ...emptyProject })
+  const [editingLegacyId, setEditingLegacyId] = useState<string | null>(null)
   const [tagsText, setTagsText] = useState('')
   const [techText, setTechText] = useState('')
   const [status, setStatus] = useState('')
@@ -175,16 +177,19 @@ export default function AdminPage() {
       supabase.from('about_me').select('*').eq('id', 1).maybeSingle(),
     ])
 
-    if (projectRows) setProjects(projectRows as PortfolioProject[])
+    setProjects(mergeWithLegacyProjects((projectRows || []) as PortfolioProject[]))
     if (reviewRows) setReviews(reviewRows as Review[])
     if (aboutRow) setAbout(aboutRow as AboutMe)
   }
 
   function editProject(project: PortfolioProject) {
+    const isLegacy = Boolean(project.legacyId)
     setForm({
       ...project,
+      id: isLegacy ? undefined : project.id,
       project_date: project.project_date || '',
     })
+    setEditingLegacyId(isLegacy ? project.id : null)
     setTagsText(fromList(project.tags))
     setTechText(fromList(project.technologies))
     setTab('projects')
@@ -192,6 +197,7 @@ export default function AdminPage() {
 
   function resetForm() {
     setForm({ ...emptyProject })
+    setEditingLegacyId(null)
     setTagsText('')
     setTechText('')
   }
@@ -220,7 +226,7 @@ export default function AdminPage() {
       is_visible: form.is_visible !== false,
     }
 
-    const query = form.id
+    const query = form.id && !editingLegacyId
       ? supabase.from('projects').update(payload).eq('id', form.id).select().single()
       : supabase.from('projects').insert(payload).select().single()
 
@@ -230,13 +236,19 @@ export default function AdminPage() {
       return
     }
 
-    setStatus('Saved.')
+    setStatus(editingLegacyId ? 'Legacy project imported and saved.' : 'Saved.')
+    setEditingLegacyId(null)
     if (data) setForm((current) => ({ ...current, id: data.id }))
     await loadAdminData()
   }
 
   async function deleteProject(id: string) {
-    if (!supabase || !confirm('Delete this project?')) return
+    if (!supabase) return
+    if (!id.includes('-') || id.split('-').length < 5) {
+      setStatus('Legacy project cannot be deleted here. Edit and save it into database first.')
+      return
+    }
+    if (!confirm('Delete this project?')) return
     const { error } = await supabase.from('projects').delete().eq('id', id)
     setStatus(error ? error.message : 'Deleted.')
     await loadAdminData()
@@ -383,7 +395,7 @@ export default function AdminPage() {
         <div className="mt-8 grid xl:grid-cols-[0.9fr_1.1fr] gap-6">
           <form onSubmit={saveProject} className="rounded-[2rem] bg-white border border-slate-100 p-6 shadow-xl shadow-indigo-500/5 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-extrabold text-slate-800">{form.id ? 'Edit Project' : 'Add Project'}</h2>
+              <h2 className="text-2xl font-extrabold text-slate-800">{form.id || editingLegacyId ? 'Edit Project' : 'Add Project'}</h2>
               <button type="button" onClick={resetForm} className="rounded-full bg-slate-100 p-2 text-slate-500"><Plus size={16} /></button>
             </div>
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as PortfolioCategory })} className="admin-input">
@@ -411,6 +423,11 @@ export default function AdminPage() {
               Visible
             </label>
             <button className="admin-button w-full inline-flex items-center justify-center gap-2"><Save size={16} /> Save Project</button>
+            {editingLegacyId && (
+              <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
+                Editing legacy project. Save will copy it into database.
+              </p>
+            )}
 
             <div className="grid sm:grid-cols-2 gap-3 pt-2">
               <label className="admin-upload">
@@ -431,6 +448,9 @@ export default function AdminPage() {
                 <div key={project.id} className="rounded-2xl border border-slate-100 p-4 flex items-start justify-between gap-4">
                   <div>
                     <p className="font-bold text-slate-800">{project.title_th}</p>
+                    {project.legacyId && (
+                      <p className="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-amber-500">legacy project</p>
+                    )}
                     <p className="text-sm text-slate-400">{project.category} · {project.project_media?.length || 0} files</p>
                   </div>
                   <div className="flex gap-2">

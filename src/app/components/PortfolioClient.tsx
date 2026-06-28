@@ -5,40 +5,11 @@ import { Navbar } from './Navbar'
 import { HeroSection } from './HeroSection'
 import { ProjectSection } from './ProjectSection'
 import { BuiltSection } from './BuiltSection'
-import { computerProjects, scimathProjects, otherCamps } from './data'
 import { supabase } from '../../lib/supabase'
 import { AboutMe, PortfolioCategory, PortfolioProject, Review, categoryMeta } from '../../lib/portfolio'
 import { AboutSection } from './AboutSection'
 import { ReviewsSection } from './ReviewsSection'
-
-function legacyProjects(): PortfolioProject[] {
-  const convert = (category: PortfolioCategory, projects: typeof computerProjects): PortfolioProject[] =>
-    projects.map((project) => ({
-      id: `${category}-${project.id}`,
-      legacyId: project.id,
-      category,
-      title_th: project.title,
-      title_en: project.title,
-      subtitle_th: project.subtitle,
-      subtitle_en: project.subtitle,
-      details_th: project.details,
-      details_en: project.details,
-      tags: project.tags,
-      technologies: project.tags,
-      achievement_th: project.achievement,
-      achievement_en: project.achievement,
-      sort_order: project.id,
-      is_featured: false,
-      is_visible: true,
-      project_media: [],
-    }))
-
-  return [
-    ...convert('computer', computerProjects),
-    ...convert('scimath', scimathProjects),
-    ...convert('camp', otherCamps),
-  ]
-}
+import { legacyPortfolioProjects, mergeWithLegacyProjects } from '../../lib/legacy-projects'
 
 const defaultAbout: AboutMe = {
   id: 1,
@@ -51,7 +22,7 @@ const defaultAbout: AboutMe = {
 }
 
 export function PortfolioClient() {
-  const [projects, setProjects] = useState<PortfolioProject[]>(legacyProjects)
+  const [projects, setProjects] = useState<PortfolioProject[]>(legacyPortfolioProjects)
   const [about, setAbout] = useState<AboutMe>(defaultAbout)
   const [reviews, setReviews] = useState<Review[]>([])
 
@@ -75,7 +46,7 @@ export function PortfolioClient() {
           .limit(12),
       ])
 
-      if (projectRows?.length) setProjects(projectRows as PortfolioProject[])
+      if (projectRows) setProjects(mergeWithLegacyProjects(projectRows as PortfolioProject[]))
       if (aboutRows) setAbout(aboutRows as AboutMe)
       if (reviewRows) setReviews(reviewRows as Review[])
     }

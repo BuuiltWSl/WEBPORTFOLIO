@@ -80,3 +80,4 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-28: Added `supabase/profile-login-fix.sql` as a focused SQL patch for profile creation and role policies.
 - 2026-06-28: Updated schema profile trigger to read Google avatar from `avatar_url` or `picture`.
 - 2026-06-28: Updated Admin email and OAuth auth state handling to save the logged-in user profile.
+- 2026-06-28: Fixed base path helpers so `/built/portfolio-web` is not duplicated in admin back links or auth URLs.

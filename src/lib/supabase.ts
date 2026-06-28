@@ -22,9 +22,14 @@ export const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'sangsanwongmoo
 export const basePath = process.env.NEXT_PUBLIC_BASE_PATH || ''
 
 export function appPath(path: string) {
-  if (!basePath) return path
-  if (path === '/') return basePath
-  return `${basePath}${path.startsWith('/') ? path : `/${path}`}`
+  const cleanBasePath = basePath.replace(/\/$/, '')
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+
+  if (!cleanBasePath) return normalizedPath
+  if (normalizedPath === '/') return cleanBasePath
+  if (normalizedPath === cleanBasePath || normalizedPath.startsWith(`${cleanBasePath}/`)) return normalizedPath
+
+  return `${cleanBasePath}${normalizedPath}`
 }
 
 export function publicUrl(path: string) {
@@ -32,7 +37,11 @@ export function publicUrl(path: string) {
   const cleanBasePath = basePath.replace(/\/$/, '')
   const nextPath = appPath(path)
 
-  if (cleanBasePath && cleanSiteUrl.endsWith(cleanBasePath) && nextPath.startsWith(cleanBasePath)) {
+  if (cleanBasePath && cleanSiteUrl.endsWith(cleanBasePath) && nextPath === cleanBasePath) {
+    return cleanSiteUrl
+  }
+
+  if (cleanBasePath && cleanSiteUrl.endsWith(cleanBasePath) && nextPath.startsWith(`${cleanBasePath}/`)) {
     return `${cleanSiteUrl}${nextPath.slice(cleanBasePath.length) || '/'}`
   }
 

@@ -71,3 +71,12 @@ description: Use this skill when working in this portfolio workspace, editing pr
 - 2026-06-28: Changed review Google redirect from `#reviews` to `?review=1` so it does not collide with OAuth hash tokens.
 - 2026-06-28: Added clearer review submit messages when user is not logged in or message is empty.
 - 2026-06-28: Adjusted admin access reset to satisfy React lint rules.
+- 2026-06-28: Added user profile upsert helper so logged-in users are saved into the `profiles` database table.
+- 2026-06-28: Added Supabase policy allowing authenticated users to insert their own profile row.
+- 2026-06-28: Added top-right navbar Login/Profile UI with avatar, email, and sign out on desktop and mobile.
+- 2026-06-28: Updated session restore to save the logged-in user profile automatically.
+- 2026-06-28: Tightened profile update policies so normal users cannot promote their own role.
+- 2026-06-28: Tightened profile insert policy so normal users can only create user-role profiles.
+- 2026-06-28: Added `supabase/profile-login-fix.sql` as a focused SQL patch for profile creation and role policies.
+- 2026-06-28: Updated schema profile trigger to read Google avatar from `avatar_url` or `picture`.
+- 2026-06-28: Updated Admin email and OAuth auth state handling to save the logged-in user profile.

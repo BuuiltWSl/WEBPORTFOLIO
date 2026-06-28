@@ -55,9 +55,40 @@ export async function sessionFromUrl(): Promise<Session | null> {
     if (error) return null
 
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
+    await ensureUserProfile(data.session)
     return data.session
   }
 
   const { data } = await supabase.auth.getSession()
+  await ensureUserProfile(data.session)
   return data.session
+}
+
+export async function ensureUserProfile(session: Session | null) {
+  if (!supabase || !session?.user) return null
+
+  const user = session.user
+  const email = user.email || ''
+  const metadata = user.user_metadata || {}
+  const displayName = metadata.full_name || metadata.name || email.split('@')[0] || 'User'
+  const avatarUrl = metadata.avatar_url || metadata.picture || null
+  const role = email.toLowerCase() === adminEmail.toLowerCase() ? 'admin' : 'user'
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert(
+      {
+        id: user.id,
+        email,
+        display_name: displayName,
+        avatar_url: avatarUrl,
+        role,
+      },
+      { onConflict: 'id' },
+    )
+    .select()
+    .maybeSingle()
+
+  if (error) return null
+  return data
 }

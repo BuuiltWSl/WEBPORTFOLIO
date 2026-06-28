@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { ArrowLeft, Check, Eye, LogOut, Plus, Save, Trash2, Upload, X } from 'lucide-react'
 import Link from 'next/link'
-import { adminEmail, appPath, publicUrl, sessionFromUrl, supabase } from '../../lib/supabase'
+import { adminEmail, appPath, ensureUserProfile, publicUrl, sessionFromUrl, supabase } from '../../lib/supabase'
 import type { AboutMe, PortfolioCategory, PortfolioProject, Review } from '../../lib/portfolio'
 
 const emptyProject: Omit<PortfolioProject, 'id' | 'sort_order' | 'is_featured' | 'is_visible'> & {
@@ -79,6 +79,7 @@ export default function AdminPage() {
     })
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)
+      ensureUserProfile(nextSession)
       setAuthReady(true)
     })
     return () => data.subscription.unsubscribe()
@@ -154,7 +155,10 @@ export default function AdminPage() {
       return
     }
 
-    if (data.session) setSession(data.session)
+    if (data.session) {
+      await ensureUserProfile(data.session)
+      setSession(data.session)
+    }
     setAuthMessage(authMode === 'signin' ? 'Login done.' : 'Account created. Check email if confirmation is on.')
   }
 

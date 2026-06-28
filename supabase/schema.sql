@@ -120,14 +120,14 @@ begin
     new.id,
     coalesce(new.email, ''),
     coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
-    new.raw_user_meta_data->>'avatar_url',
+    coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture'),
     case when exists (select 1 from public.admin_emails where email = new.email) then 'admin' else 'user' end
   )
   on conflict (id) do update
   set
     email = excluded.email,
-    display_name = coalesce(public.profiles.display_name, excluded.display_name),
-    avatar_url = coalesce(public.profiles.avatar_url, excluded.avatar_url),
+    display_name = coalesce(excluded.display_name, public.profiles.display_name),
+    avatar_url = coalesce(excluded.avatar_url, public.profiles.avatar_url),
     role = case when exists (select 1 from public.admin_emails where email = excluded.email) then 'admin' else public.profiles.role end;
 
   return new;
@@ -171,9 +171,22 @@ drop policy if exists "Users read own profile admins read all" on public.profile
 create policy "Users read own profile admins read all" on public.profiles
 for select using (auth.uid() = id or public.is_admin());
 
+drop policy if exists "Users insert own profile" on public.profiles;
+create policy "Users insert own profile" on public.profiles
+for insert with check (auth.uid() = id and (role = 'user' or public.is_admin()));
+
 drop policy if exists "Users update own profile admins update all" on public.profiles;
-create policy "Users update own profile admins update all" on public.profiles
-for update using (auth.uid() = id or public.is_admin()) with check (auth.uid() = id or public.is_admin());
+drop policy if exists "Users update own profile details" on public.profiles;
+create policy "Users update own profile details" on public.profiles
+for update using (auth.uid() = id)
+with check (
+  auth.uid() = id
+  and role = (select profiles.role from public.profiles where profiles.id = auth.uid())
+);
+
+drop policy if exists "Admins update all profiles" on public.profiles;
+create policy "Admins update all profiles" on public.profiles
+for update using (public.is_admin()) with check (public.is_admin());
 
 drop policy if exists "Public read visible projects" on public.projects;
 create policy "Public read visible projects" on public.projects
@@ -238,4 +251,3 @@ for update using (bucket_id in ('project-images', 'certificates') and public.is_
 drop policy if exists "Admins delete project files" on storage.objects;
 create policy "Admins delete project files" on storage.objects
 for delete using (bucket_id in ('project-images', 'certificates') and public.is_admin());
-

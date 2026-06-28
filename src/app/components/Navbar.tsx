@@ -1,14 +1,22 @@
 'use client'
 
 import { useMemo, useState, useEffect } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { motion, AnimatePresence } from 'framer-motion'
+import { LogOut, UserCircle } from 'lucide-react'
 import { useLanguage } from '../providers'
+import { ensureUserProfile, publicUrl, sessionFromUrl, supabase } from '../../lib/supabase'
 
 export function Navbar() {
   const [active, setActive] = useState('main')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [session, setSession] = useState<Session | null>(null)
+  const [profileOpen, setProfileOpen] = useState(false)
   const { lang, toggleLang } = useLanguage()
+  const user = session?.user
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User'
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture
 
   const navItems = useMemo(
     () => [
@@ -39,6 +47,33 @@ export function Navbar() {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [navItems])
+
+  useEffect(() => {
+    if (!supabase) return
+    sessionFromUrl().then((nextSession) => {
+      setSession(nextSession)
+      ensureUserProfile(nextSession)
+    })
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession)
+      ensureUserProfile(nextSession)
+    })
+    return () => data.subscription.unsubscribe()
+  }, [])
+
+  async function signInWithGoogle() {
+    if (!supabase) return
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: publicUrl('/') },
+    })
+  }
+
+  async function signOut() {
+    await supabase?.auth.signOut()
+    setSession(null)
+    setProfileOpen(false)
+  }
 
   return (
     <nav
@@ -84,6 +119,56 @@ export function Navbar() {
             >
               {lang === 'th' ? 'EN' : 'TH'}
             </button>
+          </li>
+          <li className="relative ml-2">
+            {user ? (
+              <>
+                <button
+                  onClick={() => setProfileOpen((open) => !open)}
+                  className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-indigo-100 bg-white text-slate-500 shadow-sm shadow-indigo-500/10"
+                  aria-label="User profile"
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                  ) : (
+                    <UserCircle size={22} />
+                  )}
+                </button>
+                <AnimatePresence>
+                  {profileOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="absolute right-0 mt-3 w-72 rounded-2xl border border-slate-100 bg-white p-4 shadow-xl shadow-indigo-500/10"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-indigo-50 text-indigo-500">
+                          {avatarUrl ? <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" /> : <UserCircle size={26} />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-extrabold text-slate-800">{displayName}</p>
+                          <p className="truncate text-xs text-slate-400">{user.email}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={signOut}
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-indigo-600"
+                      >
+                        <LogOut size={16} /> Sign out
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            ) : (
+              <button
+                onClick={signInWithGoogle}
+                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-600"
+              >
+                Login
+              </button>
+            )}
           </li>
         </ul>
 
@@ -141,6 +226,34 @@ export function Navbar() {
                 >
                   {lang === 'th' ? 'English' : 'ไทย'}
                 </button>
+              </li>
+              <li className="pt-2">
+                {user ? (
+                  <div className="rounded-2xl border border-slate-100 bg-white p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-indigo-50 text-indigo-500">
+                        {avatarUrl ? <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" /> : <UserCircle size={24} />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-extrabold text-slate-800">{displayName}</p>
+                        <p className="truncate text-xs text-slate-400">{user.email}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={signOut}
+                      className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
+                    >
+                      <LogOut size={16} /> Sign out
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={signInWithGoogle}
+                    className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white"
+                  >
+                    Login
+                  </button>
+                )}
               </li>
             </ul>
           </motion.div>
